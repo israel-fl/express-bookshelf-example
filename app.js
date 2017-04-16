@@ -13,13 +13,17 @@ const pokemon_schema = Joi.object().keys({
     total: Joi.number().integer(),
     hp: Joi.number().integer(),
     attack: Joi.number().integer(),
-    sp_attack: Joi.number().integer(),
+    defense: Joi.number().integer(),
+    sp_atk: Joi.number().integer(),
     sp_def: Joi.number().integer(),
     speed: Joi.number().integer(),
-    total: Joi.number().integer(),
+    generation: Joi.number().integer(),
     legendary: Joi.string()
 });
 
+const pokemon_update_schema = Joi.object().keys({
+    name: Joi.string()
+});
 
 app.use(bodyParser.json()); // for parsing application/json
 
@@ -41,41 +45,42 @@ app.get('/api/v1/pokemons/:id', function(request, response) {
     .then(function(pokemon) {
       response.json(pokemon);
     }, function(e) {
-      response.status(404).json({
-        error: {
-          "success": false,
-          error: ""
-        }
-      });
+        response.status(404).json({
+            error: {
+              "success": false,
+              message: "not_found"
+            }
+        });
     });
 });
 
 
 app.post('/api/v1/pokemons', function(request, response) {
-    Joi.validate(request.body, pokemon_schema, function(err, value) {
-        // Check if the request matches the schema
+    Joi.validate(request.body, pokemon_schema, { presence: "required" }, function(err, value) {
+        // Check if the request matches the schema, the request MUST include all values
         if (err) {
             response.json(err);
-        }
-    })
-    var pokemon = new Pokemon({
-        name: request.body.name,
-        type_1: request.body.type_1,
-        type_2: request.body.type_2,
-        total: request.body.total,
-        hp: request.body.hp,
-        attack: request.body.attack,
-        defense: request.body.defense,
-        sp_atk: request.body.sp_atk,
-        sp_def: request.body.sp_def,
-        speed: request.body.speed,
-        generation: request.body.generation,
-        legendary: request.body.legendary
-    });
+        } else {
+            var pokemon = new Pokemon({
+                name: request.body.name,
+                type_1: request.body.type_1,
+                type_2: request.body.type_2,
+                total: request.body.total,
+                hp: request.body.hp,
+                attack: request.body.attack,
+                defense: request.body.defense,
+                sp_atk: request.body.sp_atk,
+                sp_def: request.body.sp_def,
+                speed: request.body.speed,
+                generation: request.body.generation,
+                legendary: request.body.legendary
+            });
 
-    pokemon.save().then(function() {
-        response.json({success: true, message: "pokemon_added"});
-  });
+            pokemon.save().then(function() {
+                response.json({success: true, message: "pokemon_added", pokemon: pokemon});
+            });
+        }
+    });
 });
 
 app.delete('/api/v1/pokemons/:id', function(request, response) {
@@ -85,29 +90,52 @@ app.delete('/api/v1/pokemons/:id', function(request, response) {
     .then(function(pokemon) {
       response.json({success: true, message: "pokemon_destroyed"});
     }, function() {
-      response.status(404).json({
-        error: 'song not found'
-      });
+        response.status(404).json({
+            success: false,
+            error: {
+              message: "not_found"
+            }
+        });
     });
 });
 
 app.put('/api/v1/pokemons/:id', function(request, response) {
-  Artist
-    .where('id', request.params.id)
-    .fetch({ require: true })
-    .then(function(artist) {
-      artist.set('artist_name', request.body.name);
-      return artist.save();
-    }, function(e) {
-      response.status(404).json({
-        success: false,
-        error: {
-          message: 'artist not found'
+    var data = {}
+    // Check if the body is empty
+    if ( Object.keys(request.body).length === 0) {
+        data = request.query;  // validate the url parameters
+    } else {
+        data = request.body;  // validate the body parameters
+    }
+    Joi.validate(data, pokemon_update_schema, { presence: "required" }, function(err, value) {
+        // Check if the request matches the schema, the request MUST include all values
+        if (err) {
+            response.json(err);
+        } else {
+            Pokemon
+                .where('id', request.params.id)
+                .fetch({ require: true })
+                .then(function(pokemon) {
+                    pokemon.set('name', data.name);
+                    return pokemon.save();
+                }, function(e) {
+                    response.status(404).json(
+                        {
+                            success: false,
+                            error: {
+                                message: "not_found"
+                            }
+                        });
+                })
+                .then(function(pokemon) {
+                    response.json(
+                        {
+                            success: true,
+                            message: "pokemon_updated",
+                            pokemon: pokemon
+                        });
+                });
         }
-      });
-    })
-    .then(function(artist) {
-      response.json(artist);
     });
 });
 
