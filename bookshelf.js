@@ -1,3 +1,5 @@
+var dotenv = require('dotenv').config();
+
 var knex = require('knex')({
   client: 'mysql',
   connection: {
@@ -10,13 +12,5 @@ var knex = require('knex')({
 });
 
 var bookshelf = require('bookshelf')(knex);
-
-// log generated SQL
-var knexClient = require('knex/lib/client');
-var origQuery = knexClient.prototype.query;
-knexClient.prototype.query = function (connection, obj) {
-  console.log(`SQL: ${obj.sql}`);
-  return origQuery.apply(this, arguments);
-};
 
 module.exports = bookshelf;
