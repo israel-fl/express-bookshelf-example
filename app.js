@@ -27,7 +27,7 @@ const pokemon_update_schema = Joi.object().keys({
 
 app.use(bodyParser.json()); // for parsing application/json
 
-app.get('/api/v1/pokemons', function(request, response) {
+app.get('/v1/pokemons', function(request, response) {
   Pokemon
     .query(function (qb) {
         qb.limit(20);  // limit displayed results to 20
@@ -38,7 +38,7 @@ app.get('/api/v1/pokemons', function(request, response) {
 });
 
 
-app.get('/api/v1/pokemons/:id', function(request, response) {
+app.get('/v1/pokemons/:id', function(request, response) {
   Pokemon
     .where('id', request.params.id)
     .fetch({ require: true })
@@ -55,7 +55,7 @@ app.get('/api/v1/pokemons/:id', function(request, response) {
 });
 
 
-app.post('/api/v1/pokemons', function(request, response) {
+app.post('/v1/pokemons', function(request, response) {
     Joi.validate(request.body, pokemon_schema, { presence: "required" }, function(err, value) {
         // Check if the request matches the schema, the request MUST include all values
         if (err) {
@@ -83,7 +83,7 @@ app.post('/api/v1/pokemons', function(request, response) {
     });
 });
 
-app.delete('/api/v1/pokemons/:id', function(request, response) {
+app.delete('/v1/pokemons/:id', function(request, response) {
  Pokemon
     .where('id', request.params.id)
     .destroy({require: true})
@@ -99,7 +99,7 @@ app.delete('/api/v1/pokemons/:id', function(request, response) {
     });
 });
 
-app.put('/api/v1/pokemons/:id', function(request, response) {
+app.put('/v1/pokemons/:id', function(request, response) {
     var data = {}
     // Check if the body is empty
     if ( Object.keys(request.body).length === 0) {
